@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Indian Army Drone Defense Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: sans-serif;
+            background: #111;
+            color: #fff;
+        }
+
+        header {
+            height: 60px;
+            background: #222;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        header img {
+            height: 40px;
+            margin-right: 10px;
+        }
+
+        nav {
+            margin-left: auto;
+        }
+
+        nav button {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 15px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        nav button:hover {
+            background: #555;
+        }
+
+        .page {
+            display: none;
+            padding: 20px;
+        }
+
+        .active {
+            display: block;
+        }
+
+        #telemetry {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            width: 200px;
+        }
+
+        #batteryBar {
+            height: 10px;
+            background: #0f0;
+            width: 100%;
+            border-radius: 5px;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .hero-slider {
+            width: 100%;
+            height: 280px;
+            background: linear-gradient(135deg, #0b1620, #071827);
+            border-radius: 10px;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text);
+            padding: 20px;
+        }
+
+        .hero-slider .slides {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+            width: 300%;
+        }
+
+        .hero-slider .slide {
+            flex: 0 0 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .hero-slider h2 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .hero-slider p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--muted);
+        }
+
+        .hero-slider .slider-controls {
+            position: absolute;
+            top: 50%;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            transform: translateY(-50%);
+            padding: 0 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <img src="https://upload.wikimedia.org/wikipedia/en/4/41/Flag_of_India.svg" alt="India Flag">
+        <h2>Indian Army / ITBP Drone Defense Simulation</h2>
+        <nav>
+            <button onclick="showPage('home')">Home</button>
+            <button onclick="showPage('simulation')">Simulation</button>
+            <button onclick="showPage('telemetryPage')">Telemetry</button>
+            <button onclick="showpage('menu')">menu</button>
+            <button onclick="showPanel('dashboard')">Dashboard</button>
+            <button onclick="showPanel('controls')">Controls</button>
+            <button onclick="showPanel('map')">Map</button>
+
+
+        </nav>
+    </header>
+
+    <!-- Pages -->
+    <div id="home" class="page active">
+          
+        <div id="heroSlider" class="hero-slider">
+            <div class="slides">
+                <div class="slide active">
+                    <h2>Welcome to Portable Anti-Drone Simulation</h2>
+                    <p>Monitor drones, test detection, jamming & spoofing in real-time 3D</p>
+                    <p>This simulation shows multi-drone detection and counter measures for the Indian Army.</p>
+                </div>
+                <div class="slide">
+                    <h2>Import Missions Easily</h2>
+                    <p>Drag & drop GPX/JSON files to visualize and simulate missions</p>
+                </div>
+                <div class="slide">
+                    <h2>Control Directional Beam</h2>
+                    <p>Adjust azimuth, width & range to jam/spoof drones effectively</p>
+                </div>
+            </div>
+            <div class="slider-controls">
+                <button id="prevSlide" class="ghost">◀</button>
+                <button id="nextSlide" class="ghost">▶</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="simulation" class="page">
+        <div id="sceneContainer" style="width:100%; height:80vh;"></div>
+    </div>
+
+    <div id="telemetryPage" class="page">
+        <div id="telemetry">
+            <h3>Drone Telemetry</h3>
+            <div>Battery: <span id="battery">100%</span></div>
+            <div>RSSI: <span id="rssi">-50dBm</span></div>
+            <div>Heading: <span id="heading">0°</span></div>
+            <div style="background:#555; height:10px; border-radius:5px; margin-top:5px;">
+                <div id="batteryBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+    <script src="main.js"></script>
+    <script>
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+        (() => {
+            const slidesContainer = document.querySelector('#heroSlider .slides');
+            const slides = document.querySelectorAll('#heroSlider .slide');
+            const prevBtn = document.getElementById('prevSlide');
+            const nextBtn = document.getElementById('nextSlide');
+            let currentIndex = 0;
+
+            function showSlide(index) {
+                if (index < 0) index = slides.length - 1;
+                if (index >= slides.length) index = 0;
+                currentIndex = index;
+                slidesContainer.style.transform = `translateX(-${index * 100}%)`;
+            }
+
+            prevBtn.addEventListener('click', () => showSlide(currentIndex - 1));
+            nextBtn.addEventListener('click', () => showSlide(currentIndex + 1));
+
+            // auto slide every 6 seconds
+            setInterval(() => showSlide(currentIndex + 1), 6000);
+        })();
+
+    </script>
+</body>
+
+</html>
